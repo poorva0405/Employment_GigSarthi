@@ -1,23 +1,42 @@
 import express from "express";
 import cors from "cors";
-import featureRoutes from "./routes/featureRoutes.js";
+import { exec } from "child_process";
 
 const app = express();
 
+// middleware
 app.use(cors());
 app.use(express.json());
 
-// API routes
-app.use("/api/features", featureRoutes);
-
-// for images/graphs
+// serve images
 app.use("/outputs", express.static("outputs"));
 
-app.get("/", (req, res) => {
-  res.send("GigSense AI Backend Running");
+// -------- FEATURE 06 --------
+app.get("/api/features/06", (req, res) => {
+  exec("python3 features/f06.py", (error, stdout, stderr) => {
+    if (error) {
+      console.error("Error:", stderr);
+      return res.json({
+        status: "error",
+        message: stderr || "Python execution failed"
+      });
+    }
+
+    try {
+      const data = JSON.parse(stdout);
+      res.json(data);
+    } catch (err) {
+      res.json({
+        status: "error",
+        message: "Invalid JSON from Python",
+        raw: stdout
+      });
+    }
+  });
 });
 
-// VERY IMPORTANT
-app.listen(5000, () => {
-  console.log("Server running on port 5000");
+// -------- START SERVER --------
+const PORT = 5000;
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
