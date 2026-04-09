@@ -18,6 +18,22 @@ def word_to_number(x):
     return x
 
 
+def remove_outliers(df):
+    numeric_cols = df.select_dtypes(include=['number']).columns
+
+    for col in numeric_cols:
+        Q1 = df[col].quantile(0.25)
+        Q3 = df[col].quantile(0.75)
+        IQR = Q3 - Q1
+
+        lower_bound = Q1 - 1.5 * IQR
+        upper_bound = Q3 + 1.5 * IQR
+
+        df = df[(df[col] >= lower_bound) & (df[col] <= upper_bound)]
+
+    return df
+
+
 def clean_data():
     try:
         df = pd.read_csv("data/raw/gig_dirty_data.csv")
@@ -30,16 +46,20 @@ def clean_data():
         # CONVERT WORDS → NUMBERS
         df = df.applymap(word_to_number)
 
-        # CONVERT EVERYTHING TO NUMERIC (SAFE)
+        # CONVERT TO NUMERIC
         for col in df.columns:
             df[col] = pd.to_numeric(df[col], errors="coerce")
 
         # HANDLE MISSING VALUES
         df = df.fillna(df.median(numeric_only=True))
 
-        # REMOVE NEGATIVE VALUES
-        for col in df.columns:
+        # REMOVE NEGATIVE VALUES (ONLY NUMERIC)
+        numeric_cols = df.select_dtypes(include=['number']).columns
+        for col in numeric_cols:
             df = df[df[col] >= 0]
+
+        # REMOVE OUTLIERS (IQR METHOD)
+        df = remove_outliers(df)
 
         df = df.reset_index(drop=True)
 
@@ -49,14 +69,13 @@ def clean_data():
         os.makedirs("backend/outputs", exist_ok=True)
         df.to_csv("backend/outputs/cleaned_data.csv", index=False)
 
-        # FINAL JSON OUTPUT
         result = {
             "status": "success",
             "data": {
                 "original_rows": int(original_rows),
                 "cleaned_rows": int(cleaned_rows),
                 "columns": df.columns.tolist(),
-                "missing_values_after_cleaning": int(df.isnull().sum().sum())
+                "message": "Data cleaned + outliers removed successfully"
             }
         }
 
