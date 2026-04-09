@@ -58,7 +58,7 @@ features/  → Python scripts (logic per feature)
 
 ```bash
 git clone <repo-link>
-cd GigSense-AI
+cd GigSarthi
 ```
 
 ---
