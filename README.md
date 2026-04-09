@@ -201,10 +201,7 @@ result = {
 
 ### ❌ DO NOT MODIFY:
 
-* `server.js`
-* `routes/`
-* `controllers/`
-* `services/`
+
 * Project structure
 * Existing routing in frontend
 * README.md
